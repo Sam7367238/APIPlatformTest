@@ -33,7 +33,6 @@ class BlogPost
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
     #[Groups(["blogPost:update", "blogPost:create"])]
     private ?string $title = null;

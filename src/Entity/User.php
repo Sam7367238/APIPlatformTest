@@ -18,18 +18,22 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
     operations: [
-        new Post(validationContext: ['groups' => ['Default', 'user:create']], processor: UserPasswordHasher::class),
+        new Post(
+            normalizationContext: ["groups" => ["user:post:read"]],
+            denormalizationContext: ["groups" => ["user:create"]],
+            validationContext: ['groups' => ['Default', 'user:create']],
+            processor: UserPasswordHasher::class
+        ),
         new Get()
     ],
-    normalizationContext: ['groups' => ['user:read']],
-    denormalizationContext: ['groups' => ['user:create', 'user:update']],
+    normalizationContext: ["groups" => ["user:read"]]
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[UniqueEntity("email")]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', "user:post:read"])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -38,7 +42,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank]
     #[Assert\Email]
     #[ORM\Column(length: 180)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups(['user:read', 'user:create', "user:post:read"])]
     private ?string $email = null;
 
     /**
@@ -55,12 +59,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[Assert\NotBlank(groups: ['user:create'])]
-    #[Groups(['user:create', 'user:update'])]
+    #[Groups(['user:create'])]
     private ?string $plainPassword = null;
 
     /**
      * @var Collection<int, BlogPost>
      */
+    #[Groups("user:read")]
     #[ORM\OneToMany(targetEntity: BlogPost::class, mappedBy: 'user')]
     private Collection $blogPosts;
 
