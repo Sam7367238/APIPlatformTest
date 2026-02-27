@@ -27,6 +27,6 @@ final class BlogPostVoter extends Voter
             return false;
         }
 
-        return $user->getId() === $subject->getId();
+        return $user === $subject->getUser();
     }
 }

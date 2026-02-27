@@ -11,15 +11,19 @@ use ApiPlatform\Metadata\Post;
 use App\Repository\BlogPostRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ApiResource(operations: [
-    new Get(),
-    new Post(),
-    new GetCollection(),
-    new Patch(security: "is_granted('BLOGPOST_MANAGE', object)"),
-    new Delete(security: "is_granted('BLOGPOST_MANAGE', object)")
-], security: "is_granted('ROLE_USER')")]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Post(denormalizationContext: ["groups" => "blogPost:create"]),
+        new GetCollection(),
+        new Patch(denormalizationContext: ["groups" => "blogPost:update"], security: "is_granted('BLOGPOST_MANAGE', object)"),
+        new Delete(security: "is_granted('BLOGPOST_MANAGE', object)")
+    ],
+    security: "is_granted('ROLE_USER')"
+)]
 #[ORM\Entity(repositoryClass: BlogPostRepository::class)]
 class BlogPost
 {
@@ -31,14 +35,17 @@ class BlogPost
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
+    #[Groups(["blogPost:update", "blogPost:create"])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\Length(min: 3)]
+    #[Groups(["blogPost:update", "blogPost:create"])]
     private ?string $content = null;
 
     #[ORM\ManyToOne(inversedBy: 'blogPosts')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups("blogPost:create")]
     private ?User $user = null;
 
     public function getId(): ?int
