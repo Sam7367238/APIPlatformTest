@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     new Post(),
     new GetCollection(),
     new Patch(security: "is_granted('BLOGPOST_MANAGE', object)"),
-    new Delete()
+    new Delete(security: "is_granted('BLOGPOST_MANAGE', object)")
 ], security: "is_granted('ROLE_USER')")]
 #[ORM\Entity(repositoryClass: BlogPostRepository::class)]
 class BlogPost
