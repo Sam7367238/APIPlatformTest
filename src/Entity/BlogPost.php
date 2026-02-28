@@ -9,6 +9,8 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Repository\BlogPostRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -18,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(),
         new Post(denormalizationContext: ["groups" => "blogPost:create"]),
-        new GetCollection(),
+        new GetCollection(paginationClientItemsPerPage: true),
         new Patch(denormalizationContext: ["groups" => "blogPost:update"], security: "is_granted('BLOGPOST_MANAGE', object)"),
         new Delete(security: "is_granted('BLOGPOST_MANAGE', object)")
     ],
@@ -46,6 +48,17 @@ class BlogPost
     #[ORM\JoinColumn(nullable: false)]
     #[Groups("blogPost:create")]
     private ?User $user = null;
+
+    /**
+     * @var Collection<int, Comment>
+     */
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'blogPost', orphanRemoval: true)]
+    private Collection $comments;
+
+    public function __construct()
+    {
+        $this->comments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -84,6 +97,36 @@ class BlogPost
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Comment>
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): static
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setBlogPost($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): static
+    {
+        if ($this->comments->removeElement($comment)) {
+            // set the owning side to null (unless already changed)
+            if ($comment->getBlogPost() === $this) {
+                $comment->setBlogPost(null);
+            }
+        }
 
         return $this;
     }
